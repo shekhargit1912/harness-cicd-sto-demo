@@ -25,3 +25,5 @@ pip install -r requirements.txt
 python app.py
 curl http://localhost:8080/health
 ```
+
+<!-- test commit: verifying PR-triggered pipeline runs Build+STO but skips CD -->
