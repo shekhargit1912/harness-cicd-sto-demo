@@ -1,0 +1,9 @@
+service:
+  name: python-demo-service
+  identifier: pythondemoservice
+  serviceDefinition:
+    type: Kubernetes
+    spec: {}
+  gitOpsEnabled: true
+  orgIdentifier: default
+  projectIdentifier: Harnedd_Demo
