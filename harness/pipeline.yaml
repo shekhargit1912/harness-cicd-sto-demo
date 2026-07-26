@@ -1,0 +1,44 @@
+pipeline:
+  name: harnessci-demo
+  identifier: harnesscidemo
+  projectIdentifier: Harnedd_Demo
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: githubconnector
+        repoName: harness-cicd-sto-demo
+        build: <+input>
+  stages:
+    - stage:
+        name: Build-stage
+        identifier: Buildstage
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: false
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: Kubernetesclsuter
+              namespace: demo
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: BuildAndPushDockerRegistry_1
+                  identifier: BuildAndPushDockerRegistry_1
+                  spec:
+                    connectorRef: dockerhubregistry
+                    repo: shekharhub1912/harnessfrontend
+                    tags:
+                      - <+codebase.commitSha>
+                    dockerfile: app/Dockerfile
+                    context: app
