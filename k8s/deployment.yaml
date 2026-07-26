@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness-demo-app
+  namespace: harness-demo
+  labels:
+    app: harness-demo-app
+spec:
+  replicas: 2
+  # Explicit rolling update strategy per assignment requirement — one pod at a
+  # time replaced, and briefly one extra pod during rollout, so the app stays
+  # reachable throughout a deploy.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: harness-demo-app
+  template:
+    metadata:
+      labels:
+        app: harness-demo-app
+    spec:
+      containers:
+        - name: harness-demo-app
+          # Pinned to :latest for now during local scaffolding/testing. Once
+          # the CI stage is wired up, update this to the commit-SHA tag it
+          # pushes (either by hand, or have the pipeline patch this file with
+          # `kubectl set image` / `yq` before applying it).
+          image: shekharhub1912/harnessfrontend:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_VERSION
+              value: "latest"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          # gunicorn's worker heartbeat file needs a writable /tmp even though
+          # the root filesystem is otherwise read-only.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
