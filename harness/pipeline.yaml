@@ -40,5 +40,6 @@ pipeline:
                     repo: shekharhub1912/harnessfrontend
                     tags:
                       - <+codebase.commitSha>
+                      - latest
                     dockerfile: app/Dockerfile
                     context: app
