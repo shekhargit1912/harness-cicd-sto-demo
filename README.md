@@ -27,3 +27,4 @@ curl http://localhost:8080/health
 ```
 
 <!-- test commit: verifying PR-triggered pipeline runs Build+STO but skips CD -->
+<!-- test commit 2: re-verifying PR trigger runs CI+STO and skips CD -->
