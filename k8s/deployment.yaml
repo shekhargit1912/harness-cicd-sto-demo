@@ -28,7 +28,7 @@ spec:
         - name: harness-demo-app
 
           # Harness will replace this image during deployment
-          image: shekharhub1912/harnessfrontend:<+artifacts.primary.tag>
+          image: shekharhub1912/harnessfrontend
 
           imagePullPolicy: IfNotPresent
 
