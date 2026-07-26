@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness-demo-app
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: harness-demo-app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  # Explicit rolling update strategy per assignment requirement — one pod at a
+  # time replaced, and briefly one extra pod during rollout, so the app stays
+  # reachable throughout a deploy.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
+  selector:
+    matchLabels:
+      app: harness-demo-app
+  template:
+    metadata:
+      labels:
+        app: harness-demo-app
+    spec:
+      containers:
+        - name: harness-demo-app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.probes.port }}
+          env:
+            - name: APP_VERSION
+              value: "{{ .Values.image.tag }}"
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.probes.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.probes.path }}
+              port: {{ .Values.probes.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          # gunicorn's worker heartbeat file needs a writable /tmp even though
+          # the root filesystem is otherwise read-only.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
