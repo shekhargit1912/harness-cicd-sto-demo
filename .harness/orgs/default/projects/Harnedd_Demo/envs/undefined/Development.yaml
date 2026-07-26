@@ -1,8 +1,0 @@
-environment:
-  name: Dev
-  identifier: Dev
-  description: ""
-  tags: {}
-  type: PreProduction
-  orgIdentifier: default
-  projectIdentifier: Harnedd_Demo
