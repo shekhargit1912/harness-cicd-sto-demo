@@ -3,7 +3,6 @@ pipeline:
   identifier: harnesscidemo
   projectIdentifier: Harnedd_Demo
   orgIdentifier: default
-  tags: {}
   properties:
     ci:
       codebase:
@@ -14,13 +13,9 @@ pipeline:
     - stage:
         name: Build-stage
         identifier: Buildstage
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
-          caching:
-            enabled: true
-            override: false
           infrastructure:
             type: KubernetesDirect
             spec:
@@ -32,13 +27,110 @@ pipeline:
           execution:
             steps:
               - step:
+                  type: Semgrep
+                  name: Semgrep_1
+                  identifier: Semgrep_1
+                  spec:
+                    mode: orchestration
+                    config: auto-only
+                    target:
+                      type: repository
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                      fail_on_severity: critical
+                contextType: Pipeline
+              - step:
                   type: BuildAndPushDockerRegistry
-                  name: BuildAndPushDockerRegistry_1
-                  identifier: BuildAndPushDockerRegistry_1
+                  name: BuildAndPushDockerRegistry
+                  identifier: BuildAndPushDockerRegistry
                   spec:
                     connectorRef: dockerhubregistry
                     repo: shekharhub1912/harnessfrontend
                     tags:
-                      - <+codebase.commitSha>
+                      - <+pipeline.sequenceId>
                     dockerfile: app/Dockerfile
                     context: app
+              - step:
+                  type: AquaTrivy
+                  name: AquaTrivy
+                  identifier: AquaTrivy
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: container
+                      detection: auto
+                    advanced:
+                      log:
+                        level: info
+                      fail_on_severity: none
+                    privileged: true
+                    image:
+                      type: docker_v2
+                      tag: <+pipeline.sequenceId>
+                      name: shekharhub1912/harnessfrontend
+    - stage:
+        name: CD-With-Helm
+        identifier: CDWithHelm
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: HarnessFronetServiceHelm
+            serviceInputs:
+              serviceDefinition:
+                type: Kubernetes
+                spec:
+                  artifacts:
+                    primary:
+                      primaryArtifactRef: <+input>
+                      sources: <+input>
+          environment:
+            environmentRef: DevDemoHelm
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: HarnessInfraHelm
+          execution:
+            steps:
+              - step:
+                  type: K8sRollingDeploy
+                  name: Rollout Deployment
+                  identifier: rolloutDeployment
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+                    pruningEnabled: false
+              - step:
+                  type: Http
+                  name: Http_1
+                  identifier: Http_1
+                  spec:
+                    url: http://harness-demo-app.harness-demo.svc.cluster.local:8080/health
+                    method: GET
+                    headers: []
+                    inputVariables: []
+                    outputVariables: []
+                  timeout: 10s
+            rollbackSteps:
+              - step:
+                  type: K8sRollingRollback
+                  name: Rollback Rollout Deployment
+                  identifier: rollbackRolloutDeployment
+                  timeout: 10m
+                  spec:
+                    pruningEnabled: false
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+        when:
+          pipelineStatus: Success
+          condition: |
+            <+codebase.build.type> != "PR"
+  allowStageExecutions: true
+  delegateSelectors:
+    - helm-delegate
