@@ -71,7 +71,7 @@ This prevents unreviewed PR code from being auto-deployed — only manual runs o
 ## Failure handling
 
 - **Rollback**: `CD-With-Helm` defines an explicit `K8sRollingRollback` step under `rollbackSteps`, plus a stage-level `failureStrategies` rule (`StageRollback` on `AllErrors`) as a second line of defense. If the rollout or health check fails, Harness automatically rolls back to the last good release.
-- **Retry/backoff**: `scripts/verify-health.sh` implements a retry loop (10 attempts, 3s apart) for manual/local health verification. *(Note: the pipeline's own HTTP health-check step currently runs as a single attempt with a 10s timeout — a step-level retry Failure Strategy on that step is a planned follow-up, not yet applied.)*
+- **Retry/backoff**: the `Http_1` health-check step has a step-level `failureStrategies` rule — retries up to **5 times** with **increasing intervals (10s → 20s → 30s)** before giving up and marking the step failed (which then triggers the rollback above). `scripts/verify-health.sh` implements the same pattern (10 attempts, 3s apart) for manual/local testing outside the pipeline.
 
 ## Bonus features implemented
 
@@ -106,4 +106,3 @@ This prevents unreviewed PR code from being auto-deployed — only manual runs o
 - **Build number over commit SHA** for image tags (`<+pipeline.sequenceId>`) — both are explicitly permitted by the assignment; build number was simpler to wire between independently-runnable stages.
 - **Full rebuild-and-rescan on every merge to `main`**, rather than promoting the exact artifact already validated during the PR. This is a deliberate simplicity trade-off, not the "Artifact Promotion" bonus pattern — every deploy is guaranteed freshly built and scanned against the merge commit, at the cost of redundant work already done during the PR.
 - **`k8s/` plain manifests are kept but unused** for actual deployment — retained only as a record of the project's early scaffolding, before the Helm chart / GitOps split.
-- **HTTP health-check retry/backoff is a known gap**, called out explicitly above rather than glossed over — `verify-health.sh` has the logic, but it isn't yet wired into the pipeline's own health-check step.
