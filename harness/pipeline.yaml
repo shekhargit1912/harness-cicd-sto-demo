@@ -65,7 +65,7 @@ pipeline:
                     advanced:
                       log:
                         level: info
-                      fail_on_severity: none
+                      fail_on_severity: critical
                     privileged: true
                     image:
                       type: docker_v2
@@ -113,6 +113,21 @@ pipeline:
                     inputVariables: []
                     outputVariables: []
                   timeout: 10s
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Retry
+                          spec:
+                            retryCount: 5
+                            retryIntervals:
+                              - 10s
+                              - 20s
+                              - 30s
+                            onRetryFailure:
+                              action:
+                                type: MarkAsFailure
             rollbackSteps:
               - step:
                   type: K8sRollingRollback
