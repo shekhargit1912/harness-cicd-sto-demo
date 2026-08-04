@@ -2,6 +2,13 @@
 
 An end-to-end CI/CD pipeline with integrated security testing (STO), built on Harness (Free Tier), deploying a small Flask app to a Kubernetes cluster.
 
+## Example executions
+
+Harness supports running individual stages selectively (`allowStageExecutions: true` in the pipeline config), so these two executions demonstrate each half of the pipeline independently:
+
+- **CI + STO (Build-stage: Semgrep SAST → build/push → AquaTrivy container scan)**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/all/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/7yAC22ueRKq3wwE4ckKP0A/pipeline?storeType=INLINE
+- **CD (CD-With-Helm: rolling deploy → health check)**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/module/cd/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/hFHp1LCPTaSjeLOuIOT-gg/pipeline?storeType=INLINE
+
 ## Repositories
 
 This project spans **two repositories**, intentionally — this is the GitOps Flow bonus (see below), not an accident:
