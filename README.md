@@ -6,8 +6,9 @@ An end-to-end CI/CD pipeline with integrated security testing (STO), built on Ha
 
 Harness supports running individual stages selectively (`allowStageExecutions: true` in the pipeline config), so these two executions demonstrate each half of the pipeline independently:
 
-- **CI + STO (Build-stage: Semgrep SAST → build/push → AquaTrivy container scan)**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/all/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/7yAC22ueRKq3wwE4ckKP0A/pipeline?storeType=INLINE
-- **CD (CD-With-Helm: rolling deploy → health check)**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/module/cd/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/hFHp1LCPTaSjeLOuIOT-gg/pipeline?storeType=INLINE
+- **CI + STO — security gate blocking a real CRITICAL finding**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/all/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/7yAC22ueRKq3wwE4ckKP0A/pipeline?storeType=INLINE
+  This execution shows **Failed** — intentionally included, not an error. AquaTrivy found an actual CRITICAL vulnerability in the container image and correctly stopped the pipeline before it could reach deployment, which is exactly what the mandatory security gate is designed to do. A clean pass only proves the gate is configured; a real block proves it works.
+- **CD — rolling deploy + health check, Success**: https://app.harness.io/ng/account/xleA1dQuRSC1SGqvBC4c9Q/module/cd/orgs/default/projects/Harnedd_Demo/pipelines/harnesscidemo/deployments/hFHp1LCPTaSjeLOuIOT-gg/pipeline?storeType=INLINE
 
 ## Repositories
 
